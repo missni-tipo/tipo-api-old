@@ -1,0 +1,81 @@
+import { Request, Response } from "express";
+import { AuthService } from "../services/auth.service";
+import {
+    RegisterDto,
+    ResendTokenDto,
+    UpdatePasswordDto,
+    VerifyTokenDto,
+} from "../dtos/auth.dto";
+
+export class AuthController {
+    constructor(private authService: AuthService) {}
+
+    async register(req: Request, res: Response) {
+        const { fullName, email, role }: RegisterDto = req.body;
+
+        const isNewUser = await this.authService.registerUser(
+            fullName,
+            email,
+            role
+        );
+
+        if (!isNewUser) {
+            res.status(200).json({
+                status: true,
+                message: "Verification token resent",
+                data: { email },
+            });
+        } else {
+            res.status(201).json({
+                status: true,
+                message: "User registered successfully",
+                data: { email },
+            });
+        }
+    }
+
+    async verifyToken(req: Request, res: Response) {
+        const { email, token }: VerifyTokenDto = req.body;
+        const verify = await this.authService.verifyToken(email, token);
+
+        res.status(200).json({
+            status: true,
+            message: "Token verified successfully",
+            data: {
+                userId: verify?.id,
+                email: verify?.email,
+            },
+        });
+    }
+
+    async resendToken(req: Request, res: Response) {
+        const { email }: ResendTokenDto = req.body;
+        await this.authService.updateToken(email);
+
+        res.status(200).json({
+            status: true,
+            message: "Verification token updated",
+        });
+    }
+
+    async updatePassword(req: Request, res: Response) {
+        const { userId, oldPassword, newPassword }: UpdatePasswordDto =
+            req.body;
+
+        const storedPassword = await this.authService.updatePassword(
+            userId,
+            oldPassword,
+            newPassword
+        );
+
+        res.status(200).json({
+            status: true,
+            message: "Password updated successfully",
+            data: {
+                id: storedPassword.id,
+                email: storedPassword.email,
+                fullName: storedPassword.fullName,
+            },
+        });
+    }
+}
