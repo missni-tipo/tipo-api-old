@@ -1,5 +1,5 @@
 import { AuthRepository } from "../repositories/auth.repository";
-import { generateVerifyToken } from "../../../utils/token.util";
+import { generateVerifyCode } from "../../../utils/token.util";
 import { $Enums } from "@prisma/client";
 import { hashValue, verifyHashedValue } from "../../../utils/password.util";
 import { UserData } from "../../../shared/models/user.model";
@@ -51,7 +51,7 @@ export class AuthService {
             roleId: existingRole.id,
         });
 
-        const generateToken = generateVerifyToken();
+        const generateToken = generateVerifyCode();
 
         await this.authRepo.createVerificationToken({
             email: createUser.email,
@@ -78,7 +78,7 @@ export class AuthService {
         )
             throw new ApiError(400, "Token is still valid and has not expired");
 
-        const generateToken = generateVerifyToken();
+        const generateToken = generateVerifyCode();
         console.log({ generateToken });
 
         await this.authRepo.updateVerificationToken(email, {
@@ -181,8 +181,9 @@ export class AuthService {
         if (!userRole) throw new ApiError(400, "User role not found");
 
         const role = await this.authRepo.findRoleById(userRole.roleId);
+
         const userPayload = {
-            id: user.id,
+            userId: user.id,
             email: user.email,
             fullName: user.fullName,
             role: role?.name,
@@ -191,6 +192,7 @@ export class AuthService {
         const accessToken = jwt.sign(userPayload, config.JWT_SECRET, {
             expiresIn: "1h",
         });
+
         const refreshToken = jwt.sign(userPayload, config.JWT_REFRESH_SECRET, {
             expiresIn: "7d",
         });
@@ -206,31 +208,31 @@ export class AuthService {
         return { accessToken, refreshToken };
     }
 
-    // static async logoutUser(refreshToken: string) {
-    //     return await AuthRepository.deleteSession(refreshToken);
-    // }
+    async logoutUser(refreshToken: string) {
+        return await this.authRepo.deleteSession(refreshToken);
+    }
 
-    // static async refreshToken(oldRefreshToken: string) {
-    //     try {
-    //         const decoded = jwt.verify(
-    //             oldRefreshToken,
-    //             config.JWT_REFRESH_SECRET
-    //         ) as { userId: string };
-    //         const user = await FindUserRepository.findUserById(decoded.userId);
-    //         if (!user) throw new Error("User tidak ditemukan");
+    async refreshToken(oldRefreshToken: string) {
+        try {
+            const decoded = jwt.verify(
+                oldRefreshToken,
+                config.JWT_REFRESH_SECRET
+            ) as { userId: string };
+            const user = await this.authRepo.findUserById(decoded.userId);
+            if (!user) throw new Error("User tidak ditemukan");
 
-    //         const newAccessToken = jwt.sign(
-    //             { userId: user.id },
-    //             config.JWT_SECRET,
-    //             { expiresIn: "1h" }
-    //         );
-    //         return { accessToken: newAccessToken };
-    //     } catch (err) {
-    //         throw new Error("Refresh token tidak valid");
-    //     }
-    // }
+            const newAccessToken = jwt.sign(
+                { userId: user.id },
+                config.JWT_SECRET,
+                { expiresIn: "1h" }
+            );
+            return { accessToken: newAccessToken };
+        } catch (err) {
+            throw new Error("Refresh token tidak valid");
+        }
+    }
 
-    // static async verifyEmail(token: string) {
+    // async verifyEmail(token: string) {
     //     const verification = await AuthRepository.findVerificationToken(token);
     //     if (!verification || verification.expires < new Date()) {
     //         throw new Error(
@@ -242,7 +244,7 @@ export class AuthService {
     //     await AuthRepository.deleteVerificationToken(token);
     // }
 
-    // static async resetPassword(token: string, newPassword: string) {
+    // async resetPassword(token: string, newPassword: string) {
     //     const verification = await AuthRepository.findVerificationToken(token);
     //     if (!verification || verification.expires < new Date()) {
     //         throw new Error(
@@ -258,7 +260,7 @@ export class AuthService {
     //     await AuthRepository.deleteVerificationToken(token);
     // }
 
-    // static async loginWithOAuth(
+    // async loginWithOAuth(
     //     provider: string,
     //     providerId: string,
     //     email: string,

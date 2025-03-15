@@ -16,7 +16,7 @@ import {
     AddAFewMonthsFromNow,
     addAFewYearsFromNow,
 } from "../src/utils/dateTimeManipulation.util";
-import { generateVerifyToken } from "../src/utils/token.util";
+import { generateVerifyCode } from "../src/utils/token.util";
 import { hashValue } from "../src/utils/password.util";
 
 const prisma = new PrismaClient();
@@ -205,7 +205,7 @@ async function main() {
                 id: uuidv4(),
                 userId: usersData[0].id,
                 email: usersData[0].email,
-                token: await hashValue(generateVerifyToken()),
+                token: await hashValue(generateVerifyCode()),
                 type: VerificationTokenType.EMAIL_VERIFICATION,
                 isUsed: true,
                 expires: Date.now() + 1000 * 60 * 30,
