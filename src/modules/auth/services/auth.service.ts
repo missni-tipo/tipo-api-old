@@ -4,6 +4,8 @@ import { $Enums } from "@prisma/client";
 import { hashValue, verifyHashedValue } from "../../../utils/password.util";
 import { UserData } from "../../../shared/models/user.model";
 import { ApiError } from "../../../middlewares/error.middleware";
+import jwt from "jsonwebtoken";
+import { config } from "../../../config/config";
 export class AuthService {
     private authRepo: AuthRepository;
 
@@ -33,7 +35,7 @@ export class AuthService {
             return false;
         }
 
-        const existingRole = await this.authRepo.findRoleByName({
+        const existingRole = await this.authRepo.findRole({
             name: role.toLowerCase(),
         });
 
@@ -44,7 +46,10 @@ export class AuthService {
             email: email,
         });
 
-        await this.authRepo.createUserRole(createUser.id, existingRole.id);
+        await this.authRepo.createUserRole({
+            userId: createUser.id,
+            roleId: existingRole.id,
+        });
 
         const generateToken = generateVerifyToken();
 
@@ -126,7 +131,7 @@ export class AuthService {
         });
 
         if (verificationToken && !verificationToken.isUsed)
-            throw new ApiError(400, "User has not verified account");
+            throw new ApiError(400, "Account has not been verified");
 
         if (user.passwordHash) {
             if (!oldPassword)
@@ -153,42 +158,53 @@ export class AuthService {
         };
     }
 
-    // expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) #create season
+    async loginUser(
+        email: string,
+        password: string,
+        ip: string,
+        userAgent: string
+    ) {
+        const user = await this.authRepo.findUserEmail(email);
+        if (!user) throw new ApiError(400, "Invalid email or password");
 
-    // static async loginUser(
-    //     email: string,
-    //     password: string,
-    //     ip: string,
-    //     userAgent: string
-    // ) {
-    //     const user = await FindUserRepository.findUserByEmail(email);
+        if (!user.passwordHash)
+            throw new ApiError(400, "Account has not been verified");
 
-    //     if (!user?.password_hash) throw Error("Account has not been verified");
+        const isPasswordValid = await verifyHashedValue(
+            password,
+            user.passwordHash
+        );
+        if (!isPasswordValid)
+            throw new ApiError(400, "Invalid email or password");
 
-    //     const verifyPasswordUser = verifyPassword(password, user.password_hash);
+        const userRole = await this.authRepo.findUserRole(user.id);
+        if (!userRole) throw new ApiError(400, "User role not found");
 
-    //     if (!user || !verifyPasswordUser) {
-    //         throw new Error("Incorrect email or password");
-    //     }
+        const role = await this.authRepo.findRoleById(userRole.roleId);
+        const userPayload = {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+            role: role?.name,
+        };
 
-    //     const accessToken = jwt.sign({ userId: user.id }, config.JWT_SECRET, {
-    //         expiresIn: "1h",
-    //     });
-    //     const refreshToken = jwt.sign(
-    //         { userId: user.id },
-    //         config.JWT_REFRESH_SECRET,
-    //         { expiresIn: "7d" }
-    //     );
+        const accessToken = jwt.sign(userPayload, config.JWT_SECRET, {
+            expiresIn: "1h",
+        });
+        const refreshToken = jwt.sign(userPayload, config.JWT_REFRESH_SECRET, {
+            expiresIn: "7d",
+        });
 
-    //     await AuthRepository.createSession(
-    //         user.id,
-    //         refreshToken,
-    //         ip,
-    //         userAgent
-    //     );
+        await this.authRepo.createSession({
+            userId: user.id,
+            refreshToken,
+            expires: BigInt(Math.floor(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+            ip,
+            userAgent,
+        });
 
-    //     return { accessToken, refreshToken };
-    // }
+        return { accessToken, refreshToken };
+    }
 
     // static async logoutUser(refreshToken: string) {
     //     return await AuthRepository.deleteSession(refreshToken);

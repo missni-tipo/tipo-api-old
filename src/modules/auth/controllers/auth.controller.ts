@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import {
+    LoginDto,
     RegisterDto,
     ResendTokenDto,
     UpdatePasswordDto,
@@ -75,6 +76,26 @@ export class AuthController {
                 id: storedPassword.id,
                 email: storedPassword.email,
                 fullName: storedPassword.fullName,
+            },
+        });
+    }
+
+    async login(req: Request, res: Response) {
+        const { email, password, ip, userAgent }: LoginDto = req.body;
+
+        const user = await this.authService.loginUser(
+            email,
+            password,
+            ip,
+            userAgent
+        );
+
+        res.status(200).json({
+            status: true,
+            message: "Password updated successfully",
+            data: {
+                accessToken: user.accessToken,
+                refreshToken: user.refreshToken,
             },
         });
     }

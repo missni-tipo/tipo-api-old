@@ -46,10 +46,38 @@ export class AuthValidator {
             }),
     ];
 
+    static loginValidation = [
+        body("email")
+            .trim()
+            .notEmpty()
+            .withMessage("Email is required")
+            .isEmail()
+            .withMessage("Invalid email address"),
+        body("password").trim().notEmpty().withMessage("Password is required"),
+        body("ip").notEmpty().withMessage("IP address user must be included"),
+        body("userAgent").notEmpty().withMessage("User agent must be included"),
+    ];
+
     static validate = (req: Request, res: Response, next: NextFunction) => {
         const errors = validationResult(req);
+
+        const mapErrors = () => {
+            return errors.array().reduce(
+                (acc, err) => {
+                    const field = (err as any).path;
+
+                    if (!acc[field]) acc[field] = [];
+
+                    acc[field].push(err.msg);
+
+                    return acc;
+                },
+                {} as Record<string, string[]>
+            );
+        };
+
         if (!errors.isEmpty()) {
-            throw new ApiError(400, errors.array()[0].msg);
+            throw new ApiError(400, "Invalid Input", mapErrors());
         }
         next();
     };

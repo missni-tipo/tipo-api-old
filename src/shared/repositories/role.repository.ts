@@ -9,7 +9,7 @@ export class BaseRoleRepository extends BaseRepository<Role> {
         super(prisma.role);
     }
 
-    async findRoleByName(data: Partial<RoleData>) {
+    async findRole(data: Partial<RoleData>) {
         return await this.findOne(data);
     }
 

@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { BaseRepository } from "./base.repository";
+import { UserRoleData } from "../models/userRole.mode";
 
 const prisma = new PrismaClient();
 
@@ -12,10 +13,14 @@ export class BaseUserRoleRepository extends BaseRepository<UserRole> {
         return await this.findById(id);
     }
 
-    async createUserRole(userId: string, roleId: string) {
+    async findUserRoleByUserId(data: Partial<UserRoleData>) {
+        return await this.findOne({ userId: data.userId });
+    }
+
+    async createUserRole(data: Partial<UserRoleData>) {
         return await this.create({
-            userId: userId,
-            roleId: roleId,
+            userId: data.userId,
+            roleId: data.roleId,
         });
     }
 }

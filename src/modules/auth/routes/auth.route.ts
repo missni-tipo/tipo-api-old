@@ -35,4 +35,11 @@ router.put(
     authController.updatePassword.bind(authController)
 );
 
+router.post(
+    "/login",
+    AuthValidator.loginValidation,
+    AuthValidator.validate,
+    authController.login.bind(authController)
+);
+
 export default router;

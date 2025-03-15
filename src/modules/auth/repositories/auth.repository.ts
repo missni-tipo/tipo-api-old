@@ -10,6 +10,7 @@ import { SessionData } from "../../../shared/models/session.model";
 import { BaseUserRoleRepository } from "../../../shared/repositories/userRole.repository";
 import { BaseRoleRepository } from "../../../shared/repositories/role.repository";
 import { RoleData } from "../../../shared/models/role.model";
+import { UserRoleData } from "../../../shared/models/userRole.mode";
 
 const prisma = new PrismaClient();
 
@@ -30,8 +31,12 @@ export class AuthRepository {
         this.roleRepo = new BaseRoleRepository();
     }
 
-    async findRoleByName(data: Partial<RoleData>) {
-        return await this.roleRepo.findRoleByName(data);
+    async findRoleById(id: string) {
+        return await this.roleRepo.findRoleById(id);
+    }
+
+    async findRole(data: Partial<RoleData>) {
+        return await this.roleRepo.findRole(data);
     }
 
     async findUserById(id: string) {
@@ -50,8 +55,17 @@ export class AuthRepository {
         return await this.userRepo.updateUser(id, data);
     }
 
-    async createUserRole(userId: string, roleId: string) {
-        return await this.userRoleRepo.createUserRole(userId, roleId);
+    async findUserRole(userId: string) {
+        return await this.userRoleRepo.findUserRoleByUserId({
+            userId,
+        });
+    }
+
+    async createUserRole(data: Partial<UserRoleData>) {
+        return await this.userRoleRepo.createUserRole({
+            userId: data.userId,
+            roleId: data.roleId,
+        });
     }
 
     async createSession(data: SessionData) {

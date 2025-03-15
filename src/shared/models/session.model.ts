@@ -3,5 +3,5 @@ export interface SessionData {
     refreshToken: string;
     ip: string;
     userAgent: string;
-    expires: number;
+    expires: bigint;
 }
