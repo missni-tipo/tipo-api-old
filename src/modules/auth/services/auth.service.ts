@@ -28,10 +28,7 @@ export class AuthService {
                 existingUser.passwordHash !== null ||
                 existingUser.status !== "INACTIVE"
             ) {
-                throw new ApiError(
-                    400,
-                    "Email is already registered and active"
-                );
+                throw new ApiError(400, "Email is already registered");
             }
 
             await this.updateVerifyToken(existingUser.email);
@@ -47,7 +44,6 @@ export class AuthService {
         const createUser = await this.authRepo.createUser({
             fullName: fullName,
             email: email,
-            passwordHash: await hashValue("temporary-password"),
         });
 
         await this.authRepo.createUserRole({
