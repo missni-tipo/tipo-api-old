@@ -1,5 +1,8 @@
 import { AuthRepository } from "../repositories/auth.repository";
-import { generateVerifyCode } from "../../../utils/token.util";
+import {
+    generateJWTToken,
+    generateVerifyCode,
+} from "../../../utils/token.util";
 import { $Enums } from "@prisma/client";
 import { hashValue, verifyHashedValue } from "../../../utils/password.util";
 import { UserData } from "../../../shared/models/user.model";
@@ -31,7 +34,7 @@ export class AuthService {
                 );
             }
 
-            await this.updateToken(existingUser.email);
+            await this.updateVerifyToken(existingUser.email);
             return false;
         }
 
@@ -44,6 +47,7 @@ export class AuthService {
         const createUser = await this.authRepo.createUser({
             fullName: fullName,
             email: email,
+            passwordHash: await hashValue("temporary-password"),
         });
 
         await this.authRepo.createUserRole({
@@ -65,7 +69,7 @@ export class AuthService {
         return true;
     }
 
-    async updateToken(email: string): Promise<Boolean> {
+    async updateVerifyToken(email: string): Promise<Boolean> {
         const storedToken = await this.authRepo.findVerificationToken({
             email,
         });
@@ -189,18 +193,22 @@ export class AuthService {
             role: role?.name,
         };
 
-        const accessToken = jwt.sign(userPayload, config.JWT_SECRET, {
-            expiresIn: "1h",
-        });
+        const accessToken = generateJWTToken(
+            userPayload,
+            config.JWT_SECRET,
+            "1h"
+        );
 
-        const refreshToken = jwt.sign(userPayload, config.JWT_REFRESH_SECRET, {
-            expiresIn: "7d",
-        });
+        const refreshToken = generateJWTToken(
+            userPayload,
+            config.JWT_REFRESH_SECRET,
+            "7d"
+        );
 
         await this.authRepo.createSession({
             userId: user.id,
             refreshToken,
-            expires: BigInt(Math.floor(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+            expires: BigInt(Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60),
             ip,
             userAgent,
         });
@@ -214,51 +222,41 @@ export class AuthService {
 
     async refreshToken(oldRefreshToken: string) {
         try {
+            const session = await this.authRepo.findSession({
+                refreshToken: oldRefreshToken,
+            });
+            if (!session) throw new ApiError(400, "Invalid refresh token");
+
             const decoded = jwt.verify(
                 oldRefreshToken,
                 config.JWT_REFRESH_SECRET
             ) as { userId: string };
             const user = await this.authRepo.findUserById(decoded.userId);
-            if (!user) throw new Error("User tidak ditemukan");
+            if (!user) throw new ApiError(404, "User not found");
 
-            const newAccessToken = jwt.sign(
-                { userId: user.id },
+            const userRole = await this.authRepo.findUserRole(user.id);
+            if (!userRole) throw new ApiError(400, "User role not found");
+
+            const role = await this.authRepo.findRoleById(userRole.roleId);
+
+            const userPayload = {
+                userId: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: role?.name,
+            };
+
+            const newAccessToken = generateJWTToken(
+                userPayload,
                 config.JWT_SECRET,
-                { expiresIn: "1h" }
+                "1h"
             );
+
             return { accessToken: newAccessToken };
         } catch (err) {
-            throw new Error("Refresh token tidak valid");
+            throw new ApiError(400, "Refresh token is invalid");
         }
     }
-
-    // async verifyEmail(token: string) {
-    //     const verification = await AuthRepository.findVerificationToken(token);
-    //     if (!verification || verification.expires < new Date()) {
-    //         throw new Error(
-    //             "Token verifikasi tidak valid atau sudah kedaluwarsa"
-    //         );
-    //     }
-
-    //     await AuthRepository.updateUserEmailVerified(verification.email);
-    //     await AuthRepository.deleteVerificationToken(token);
-    // }
-
-    // async resetPassword(token: string, newPassword: string) {
-    //     const verification = await AuthRepository.findVerificationToken(token);
-    //     if (!verification || verification.expires < new Date()) {
-    //         throw new Error(
-    //             "Token reset password tidak valid atau sudah kedaluwarsa"
-    //         );
-    //     }
-
-    //     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    //     await AuthRepository.updateUserPassword(
-    //         verification.email,
-    //         hashedPassword
-    //     );
-    //     await AuthRepository.deleteVerificationToken(token);
-    // }
 
     // async loginWithOAuth(
     //     provider: string,

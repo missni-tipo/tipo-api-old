@@ -9,6 +9,10 @@ export class BaseSessionRepository extends BaseRepository<Session> {
         super(prisma.session);
     }
 
+    async findSessionByToken(data: Partial<SessionData>) {
+        return await this.findOne(data);
+    }
+
     async findSessionById(id: string) {
         return await this.findById(id);
     }

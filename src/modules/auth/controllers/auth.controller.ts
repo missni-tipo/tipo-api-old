@@ -21,7 +21,7 @@ export class AuthController {
         );
 
         if (!isNewUser) {
-            res.status(200).json({
+            res.status(201).json({
                 status: true,
                 message: "Verification token resent",
                 data: { email },
@@ -51,7 +51,7 @@ export class AuthController {
 
     async resendToken(req: Request, res: Response) {
         const { email }: ResendTokenDto = req.body;
-        await this.authService.updateToken(email);
+        await this.authService.updateVerifyToken(email);
 
         res.status(200).json({
             status: true,
@@ -69,7 +69,7 @@ export class AuthController {
             newPassword
         );
 
-        res.status(200).json({
+        res.status(201).json({
             status: true,
             message: "Password updated successfully",
             data: {
@@ -92,10 +92,33 @@ export class AuthController {
 
         res.status(200).json({
             status: true,
-            message: "Password updated successfully",
+            message: "login successful",
             data: {
                 accessToken: user.accessToken,
                 refreshToken: user.refreshToken,
+            },
+        });
+    }
+
+    async logout(req: Request, res: Response) {
+        const { refreshToken } = req.body;
+        await this.authService.logoutUser(refreshToken);
+
+        res.status(204).json({
+            status: true,
+            message: "Logout successful",
+        });
+    }
+
+    async refreshToken(req: Request, res: Response) {
+        const { refreshToken } = req.body;
+        const newToken = await this.authService.refreshToken(refreshToken);
+
+        res.status(201).json({
+            status: true,
+            message: "Access token refreshed",
+            data: {
+                accessToken: newToken.accessToken,
             },
         });
     }

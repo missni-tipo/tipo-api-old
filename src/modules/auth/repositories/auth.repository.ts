@@ -68,6 +68,10 @@ export class AuthRepository {
         });
     }
 
+    async findSession(data: Partial<SessionData>) {
+        return await this.sessionRepo.findSessionByToken(data);
+    }
+
     async createSession(data: SessionData) {
         return await this.sessionRepo.createSession(data);
     }

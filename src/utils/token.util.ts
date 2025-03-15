@@ -9,11 +9,7 @@ export const generateVerifyCode = (length: number = 6): string => {
 export const generateJWTToken = (
     userPayload: Record<string, any>,
     secret: string,
-    expired: number
+    expired: string | number
 ): string => {
-    const token = jwt.sign(userPayload, secret, {
-        expiresIn: expired,
-    });
-
-    return token;
+    return jwt.sign(userPayload, secret, { expiresIn: expired as any });
 };

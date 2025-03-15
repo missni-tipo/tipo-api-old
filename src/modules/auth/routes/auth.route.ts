@@ -42,4 +42,18 @@ router.post(
     authController.login.bind(authController)
 );
 
+router.post(
+    "/logout",
+    AuthValidator.loginValidation,
+    AuthValidator.validate,
+    authController.login.bind(authController)
+);
+
+router.post(
+    "/refresh-token",
+    AuthValidator.loginValidation,
+    AuthValidator.validate,
+    authController.login.bind(authController)
+);
+
 export default router;
