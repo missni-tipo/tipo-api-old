@@ -52,6 +52,8 @@ export class AuthService {
 
             const generateToken = generateVerifyCode();
             const hashedToken = await hashValue(generateToken);
+            console.log({ generateToken }); //for debuging
+            console.log({ hashedToken }); //for debuging
 
             try {
                 await this.authRepo.createTokenVerification({
@@ -215,6 +217,7 @@ export class AuthService {
                 config.JWT_SECRET,
                 "1h"
             );
+
             const refreshToken = generateJWTToken(
                 userPayload,
                 config.JWT_REFRESH_SECRET,
@@ -224,7 +227,7 @@ export class AuthService {
             await this.authRepo.createSession({
                 userId: user.id,
                 refreshToken,
-                expires: BigInt(Date.now() / 1000 + 7 * 24 * 60 * 60),
+                expires: BigInt(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 ip,
                 userAgent,
             });

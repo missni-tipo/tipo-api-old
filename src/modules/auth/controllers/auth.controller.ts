@@ -23,7 +23,7 @@ export class AuthController {
         if (!isNewUser) {
             res.status(201).json({
                 status: true,
-                message: "Verification token resent",
+                message: "Token Verification resent",
                 data: { email },
             });
         } else {
@@ -55,7 +55,7 @@ export class AuthController {
 
         res.status(200).json({
             status: true,
-            message: "Verification token updated",
+            message: "Token Verification updated",
         });
     }
 
@@ -104,7 +104,7 @@ export class AuthController {
         const { refreshToken } = req.body;
         await this.authService.logoutUser(refreshToken);
 
-        res.status(204).json({
+        res.status(200).json({
             status: true,
             message: "Logout successful",
         });
