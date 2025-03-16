@@ -53,10 +53,14 @@ export class AuthService {
 
         const generateToken = generateVerifyCode();
 
+        const hashedToken = await hashValue(generateToken);
+        console.log({ generateToken });
+        console.log({ hashedToken }); // debug for testing
+
         await this.authRepo.createVerificationToken({
             email: createUser.email,
             userId: createUser.id,
-            token: await hashValue(generateToken),
+            token: hashedToken,
             expires: BigInt(Date.now() + 1 * 60 * 1000),
             isUsed: false,
             type: $Enums.VerificationTokenType.EMAIL_VERIFICATION,
@@ -79,10 +83,12 @@ export class AuthService {
             throw new ApiError(400, "Token is still valid and has not expired");
 
         const generateToken = generateVerifyCode();
+        const hashedToken = await hashValue(generateToken);
         console.log({ generateToken });
+        console.log({ hashedToken });
 
         await this.authRepo.updateVerificationToken(email, {
-            token: await hashValue(generateToken),
+            token: hashedToken,
             expires: BigInt(Date.now() + 1 * 60 * 1000),
             isUsed: false,
             type: $Enums.VerificationTokenType.EMAIL_VERIFICATION,
@@ -227,6 +233,9 @@ export class AuthService {
                 oldRefreshToken,
                 config.JWT_REFRESH_SECRET
             ) as { userId: string };
+
+            console.log({ decoded }); // for debuging
+
             const user = await this.authRepo.findUserById(decoded.userId);
             if (!user) throw new ApiError(404, "User not found");
 
