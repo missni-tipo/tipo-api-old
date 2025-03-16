@@ -25,3 +25,7 @@ export interface LoginDto {
     ip: string;
     userAgent: string;
 }
+
+export interface refreshTokenDto {
+    refreshToken: string;
+}
