@@ -58,6 +58,12 @@ export class AuthValidator {
         body("userAgent").notEmpty().withMessage("User agent must be included"),
     ];
 
+    static refreshTokenValidation = [
+        body("refreshToken")
+            .notEmpty()
+            .withMessage("Refresh Token is required"),
+    ];
+
     static validate = (req: Request, res: Response, next: NextFunction) => {
         const errors = validationResult(req);
 
