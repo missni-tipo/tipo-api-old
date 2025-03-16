@@ -152,13 +152,13 @@ export class AuthService {
     ): Promise<Partial<UserData>> {
         try {
             const user = await this.authRepo.findUserById(userId);
-            if (!user) throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
+            if (!user) throw new ApiError(400, "User Not Found");
 
             const verificationToken = await this.authRepo.findTokenVerification(
                 { email: user.email }
             );
             if (verificationToken && !verificationToken.isUsed) {
-                throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
+                throw new ApiError(400, "Account has not been verified");
             }
 
             if (
@@ -166,7 +166,7 @@ export class AuthService {
                 (!oldPassword ||
                     !(await verifyHashedValue(oldPassword, user.passwordHash)))
             ) {
-                throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
+                throw new ApiError(400, "Old Password has been required");
             }
 
             const hashedPassword = await hashValue(newPassword);
@@ -177,8 +177,8 @@ export class AuthService {
 
             return { id: user.id, email: user.email, fullName: user.fullName };
         } catch (error) {
-            console.error("Error in updatePassword:", error);
-            throw new ApiError(500, "PASSWORD_UPDATE_FAILED");
+            console.error("Error in Update Password:", error);
+            throw new ApiError(500, "Update Password Failed");
         }
     }
 
@@ -195,11 +195,11 @@ export class AuthService {
                 !user.passwordHash ||
                 !(await verifyHashedValue(password, user.passwordHash))
             ) {
-                throw new ApiError(400, "LOGIN_FAILED");
+                throw new ApiError(400, "Invalid email or password");
             }
 
             const userRole = await this.authRepo.findUserRole(user.id);
-            if (!userRole) throw new ApiError(400, "LOGIN_FAILED");
+            if (!userRole) throw new ApiError(400, "User Not Found");
 
             const role = await this.authRepo.findRoleById(userRole.roleId);
             const userPayload = {
@@ -231,8 +231,8 @@ export class AuthService {
 
             return { accessToken, refreshToken };
         } catch (error) {
-            console.error("Error in loginUser:", error);
-            throw new ApiError(500, "LOGIN_FAILED");
+            console.error("Error in Login User:", error);
+            throw new ApiError(500, "Login Failed");
         }
     }
 
@@ -240,8 +240,8 @@ export class AuthService {
         try {
             return await this.authRepo.deleteSession(refreshToken);
         } catch (error) {
-            console.error("Error in logoutUser:", error);
-            throw new ApiError(500, "LOGOUT_FAILED");
+            console.error("Error in Logout User:", error);
+            throw new ApiError(500, "Logout Failed");
         }
     }
 
@@ -250,17 +250,17 @@ export class AuthService {
             const session = await this.authRepo.findSession({
                 refreshToken: oldRefreshToken,
             });
-            if (!session) throw new ApiError(400, "REFRESH_FAILED");
+            if (!session) throw new ApiError(400, "Invalid refresh token");
 
             const decoded = jwt.verify(
                 oldRefreshToken,
                 config.JWT_REFRESH_SECRET
             ) as { userId: string };
             const user = await this.authRepo.findUserById(decoded.userId);
-            if (!user) throw new ApiError(400, "REFRESH_FAILED");
+            if (!user) throw new ApiError(400, "User Not Found");
 
             const userRole = await this.authRepo.findUserRole(user.id);
-            if (!userRole) throw new ApiError(400, "REFRESH_FAILED");
+            if (!userRole) throw new ApiError(400, "User Not Found");
 
             const role = await this.authRepo.findRoleById(userRole.roleId);
             const userPayload = {
@@ -279,8 +279,8 @@ export class AuthService {
 
             return { accessToken: newAccessToken };
         } catch (error) {
-            console.error("Error in refreshToken:", error);
-            throw new ApiError(500, "REFRESH_FAILED");
+            console.error("Error in Refresh Token:", error);
+            throw new ApiError(500, "Refresh Token Failed");
         }
     }
 
