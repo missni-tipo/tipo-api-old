@@ -44,16 +44,15 @@ router.post(
 
 router.post(
     "/logout",
-    AuthValidator.loginValidation,
     AuthValidator.validate,
-    authController.login.bind(authController)
+    authController.logout.bind(authController)
 );
 
 router.post(
     "/refresh-token",
-    AuthValidator.loginValidation,
+    AuthValidator.refreshTokenValidation,
     AuthValidator.validate,
-    authController.login.bind(authController)
+    authController.refreshToken.bind(authController)
 );
 
 export default router;
