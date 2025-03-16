@@ -1,13 +1,16 @@
 import express from "express";
+import "express-async-errors";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import moment from "moment-timezone";
 
 dotenv.config();
 
 import { config } from "./config/config";
 import router from "./routes/index.route";
+import { errorHandler } from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -16,7 +19,12 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
+// set the timezone globally
+process.env.TZ = "Asia/Jakarta";
+
 app.use(`/api/${config.API_VERSION}`, router);
+
+app.use(errorHandler as any);
 
 const startServer = async () => {
     try {

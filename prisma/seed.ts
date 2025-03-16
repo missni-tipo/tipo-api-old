@@ -5,105 +5,117 @@ import {
     ResetFrequency,
     Status,
     TransactionType,
+    TokenVerificationType,
 } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
-import { saltAndHashPassword } from "../src/utils/password.util";
+import {
+    ROLE_BASE_MAP,
+    UserRoleType as userRole,
+} from "../src/shared/types/common.type";
+import {
+    AddAFewMonthsFromNow,
+    addAFewYearsFromNow,
+} from "../src/utils/dateTimeManipulation.util";
+import { generateVerifyCode } from "../src/utils/token.util";
+import { hashValue } from "../src/utils/password.util";
 
 const prisma = new PrismaClient();
+
+const roleBase = ROLE_BASE_MAP;
 
 async function main() {
     // Seed roles
     await prisma.role.createMany({
         data: [
-            { name: "customer", description: "Regular user" },
-            { name: "admin_wisata", description: "Admin wisata" },
-            { name: "admin_system", description: "System admin" },
+            { name: roleBase.CUSTOMER, description: "Regular user" },
+            { name: roleBase.ADMIN, description: "Tour Admin" },
+            { name: roleBase.DEV, description: "Developer or System Admin" },
         ],
         skipDuplicates: true,
     });
 
     interface UserSeedData {
         id: string;
-        full_name: string;
+        fullName: string;
         gender: "m" | "f";
         birthdate: Date;
         domicile: string;
         email: string;
-        phone_number: string;
-        password_hash: string;
+        phoneNumber: string;
+        passwordHash: string;
         pin: string;
         status: Status;
         picture: string;
-        profile_completed_at: Date | null;
-        created_at: Date;
-        updated_at: Date;
+        profileCompletedAt: number | null;
+        createdAt: number;
+        updatedAt: number;
     }
-
+    const date: number = Date.now();
     // Data Users
     const usersData: UserSeedData[] = [
         {
             id: uuidv4(),
-            full_name: "Budi Santoso",
+            fullName: "Budi Santoso",
             gender: "m",
-            birthdate: new Date("1990-05-20"),
+            birthdate: new Date(),
             domicile: "Surabaya",
             email: "budi.santoso@example.com",
-            phone_number: "081234567891",
-            password_hash: "password123",
+            phoneNumber: "081234567891",
+            passwordHash: "password123",
             pin: "123456",
-            status: Status.active,
+            status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
-            profile_completed_at: new Date(),
-            created_at: new Date(),
-            updated_at: new Date(),
+            profileCompletedAt: date,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
         {
             id: uuidv4(),
-            full_name: "Siti Aminah",
+            fullName: "Siti Aminah",
             gender: "f",
-            birthdate: new Date("1997-09-10"),
+            birthdate: new Date(),
             domicile: "Yogyakarta",
             email: "siti.aminah@example.com",
-            phone_number: "082198765432",
-            password_hash: "password123",
+            phoneNumber: "082198765432",
+            passwordHash: "password123",
             pin: "123456",
-            status: Status.active,
+            status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
-            profile_completed_at: new Date(),
-            created_at: new Date(),
-            updated_at: new Date(),
+            profileCompletedAt: Date.now(),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
         {
             id: uuidv4(),
-            full_name: "Doni Prasetyo",
+            fullName: "Doni Prasetyo",
             gender: "m",
-            birthdate: new Date("1993-11-15"),
+            birthdate: new Date(),
             domicile: "Semarang",
             email: "doni.prasetyo@example.com",
-            phone_number: "081312345678",
-            password_hash: "password123",
+            phoneNumber: "081312345678",
+            passwordHash: "password123",
             pin: "123456",
-            status: Status.active,
+            status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
-            profile_completed_at: null,
-            created_at: new Date(),
-            updated_at: new Date(),
+            profileCompletedAt: null,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
         {
             id: uuidv4(),
-            full_name: "Linda Pertiwi",
+            fullName: "Linda Pertiwi",
             gender: "f",
-            birthdate: new Date("1995-04-05"),
+            birthdate: new Date(),
             domicile: "Bali",
             email: "linda.pertiwi@example.com",
-            phone_number: "081256789012",
-            password_hash: "password123",
+            phoneNumber: "081256789012",
+            passwordHash: "password123",
             pin: "123456",
-            status: Status.active,
+            status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
-            profile_completed_at: null,
-            created_at: new Date(),
-            updated_at: new Date(),
+            profileCompletedAt: null,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     ];
 
@@ -111,8 +123,8 @@ async function main() {
     const usersWithHashedData = await Promise.all(
         usersData.map(async (user) => ({
             ...user,
-            password_hash: await saltAndHashPassword(user.password_hash),
-            pin: await saltAndHashPassword(user.pin),
+            passwordHash: await hashValue(user.passwordHash),
+            pin: await hashValue(user.pin),
         }))
     );
 
@@ -129,24 +141,24 @@ async function main() {
     await prisma.userRole.createMany({
         data: [
             {
-                user_id: usersData[0].id,
-                role_id: roleMap["customer"],
-                created_at: new Date(),
+                userId: usersData[0].id,
+                roleId: roleMap[roleBase.CUSTOMER],
+                createdAt: Date.now(),
             },
             {
-                user_id: usersData[1].id,
-                role_id: roleMap["admin_wisata"],
-                created_at: new Date(),
+                userId: usersData[1].id,
+                roleId: roleMap[roleBase.ADMIN],
+                createdAt: Date.now(),
             },
             {
-                user_id: usersData[2].id,
-                role_id: roleMap["admin_system"],
-                created_at: new Date(),
+                userId: usersData[2].id,
+                roleId: roleMap[roleBase.DEV],
+                createdAt: Date.now(),
             },
             {
-                user_id: usersData[3].id,
-                role_id: roleMap["customer"],
-                created_at: new Date(),
+                userId: usersData[3].id,
+                roleId: roleMap[roleBase.CUSTOMER],
+                createdAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -157,14 +169,14 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                user_id: usersData[0].id,
+                userId: usersData[0].id,
                 provider: "email",
-                provider_id: usersData[0].id,
-                refresh_token: null,
-                access_token: null,
-                expires_at: null,
-                created_at: new Date(),
-                updated_at: new Date(),
+                providerId: usersData[0].id,
+                refreshToken: null,
+                accessToken: null,
+                expiresAt: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -175,28 +187,29 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                user_id: usersData[0].id,
-                refresh_token: uuidv4(),
-                user_agent: "Mozilla/5.0", // Ganti sesuai kebutuhan
-                ip_address: "127.0.0.1", // Ganti sesuai kebutuhan
-                expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24),
-                created_at: new Date(),
+                userId: usersData[0].id,
+                refreshToken: uuidv4(),
+                userAgent: "Mozilla/5.0",
+                ipAddress: "127.0.0.1",
+                expiresAt: Date.now() + 1000 * 60 * 60 * 24,
+                createdAt: Date.now(),
             },
         ],
         skipDuplicates: true,
     });
 
-    // Seed VerificationToken
-    await prisma.verificationToken.createMany({
+    // Seed TokenVerification
+    await prisma.tokenVerification.createMany({
         data: [
             {
                 id: uuidv4(),
-                user_id: usersData[0].id,
+                userId: usersData[0].id,
                 email: usersData[0].email,
-                token: uuidv4(),
-                type: "email_verification",
-                expires: new Date(Date.now() + 1000 * 60 * 30),
-                created_at: new Date(),
+                token: await hashValue(generateVerifyCode()),
+                type: TokenVerificationType.EMAIL_VERIFICATION,
+                isUsed: true,
+                expires: Date.now() + 1000 * 60 * 30,
+                createdAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -214,44 +227,44 @@ async function main() {
                 id: uuidv4(),
                 name: "Taman Wisata Alam Mangrove",
                 email: "mangrove@example.com",
-                phone_number: "081234567890",
+                phoneNumber: "081234567890",
                 description:
                     "Wisata alam dengan ekosistem mangrove yang indah.",
                 location: "Jakarta Utara",
                 latitude: -6.1185,
                 longitude: 106.9034,
                 category: "alam",
-                status: ProcessStatus.approved,
+                status: ProcessStatus.APPROVED,
                 rating: 4.7,
-                review_count: 25,
+                reviewCount: 25,
                 picture: [
                     "https://picsum.photos/200/300",
                     "https://picsum.photos/200/300",
                 ],
-                created_by: user.id,
-                created_at: new Date(),
-                updated_at: new Date(),
+                createdBy: user.id,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
             {
                 id: uuidv4(),
                 name: "Waterboom PIK",
                 email: "waterboom@example.com",
-                phone_number: "081298765432",
+                phoneNumber: "081298765432",
                 description: "Waterpark dengan berbagai wahana air seru.",
                 location: "Jakarta Utara",
                 latitude: -6.118,
                 longitude: 106.9,
                 category: "hiburan",
-                status: ProcessStatus.approved,
+                status: ProcessStatus.APPROVED,
                 rating: 4.5,
-                review_count: 40,
+                reviewCount: 40,
                 picture: [
                     "https://picsum.photos/200/300",
                     "https://picsum.photos/200/300",
                 ],
-                created_by: user.id,
-                created_at: new Date(),
-                updated_at: new Date(),
+                createdBy: user.id,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -284,23 +297,23 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                tour_id: tour.id,
-                facility_type_id: facilityTypeList[0].id,
+                tourId: tour.id,
+                facilityTypeId: facilityTypeList[0].id,
                 name: "Toilet Umum A",
                 barcode: "FAC-001",
-                is_active: true,
-                created_at: new Date(),
-                updated_at: new Date(),
+                isActive: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
             {
                 id: uuidv4(),
-                tour_id: tour.id,
-                facility_type_id: facilityTypeList[1].id,
+                tourId: tour.id,
+                facilityTypeId: facilityTypeList[1].id,
                 name: "Mushola Selatan",
                 barcode: "FAC-002",
-                is_active: true,
-                created_at: new Date(),
-                updated_at: new Date(),
+                isActive: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -314,23 +327,23 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                facility_id: facilityList[0].id,
+                facilityId: facilityList[0].id,
                 price: 2000,
                 currency: "IDR",
-                start_date: new Date(),
-                end_date: null,
-                created_at: new Date(),
-                updated_at: new Date(),
+                startDate: Date.now(),
+                endDate: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
             {
                 id: uuidv4(),
-                facility_id: facilityList[1].id,
+                facilityId: facilityList[1].id,
                 price: 5000,
                 currency: "IDR",
-                start_date: new Date(),
-                end_date: null,
-                created_at: new Date(),
-                updated_at: new Date(),
+                startDate: Date.now(),
+                endDate: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -341,21 +354,21 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                tour_id: tour.id,
-                full_name: "Budi Santoso",
+                tourId: tour.id,
+                fullName: "Budi Santoso",
                 phone: "081212345678",
-                status: Status.active,
-                created_at: new Date(),
-                updated_at: new Date(),
+                status: Status.ACTIVE,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
             {
                 id: uuidv4(),
-                tour_id: tour.id,
-                full_name: "Siti Aminah",
+                tourId: tour.id,
+                fullName: "Siti Aminah",
                 phone: "081298765432",
-                status: Status.active,
-                created_at: new Date(),
-                updated_at: new Date(),
+                status: Status.ACTIVE,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -369,23 +382,23 @@ async function main() {
         data: [
             {
                 id: uuidv4(),
-                facility_id: facilityList[0].id,
-                employee_id: employeeList[0].id,
+                facilityId: facilityList[0].id,
+                employeeId: employeeList[0].id,
                 position: "Petugas Kebersihan",
-                start_date: new Date(),
-                end_date: null,
-                created_at: new Date(),
-                updated_at: new Date(),
+                startDate: Date.now(),
+                endDate: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
             {
                 id: uuidv4(),
-                facility_id: facilityList[1].id,
-                employee_id: employeeList[1].id,
+                facilityId: facilityList[1].id,
+                employeeId: employeeList[1].id,
                 position: "Penjaga Mushola",
-                start_date: new Date(),
-                end_date: null,
-                created_at: new Date(),
-                updated_at: new Date(),
+                startDate: Date.now(),
+                endDate: null,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
             },
         ],
         skipDuplicates: true,
@@ -403,21 +416,21 @@ async function main() {
     const promotion = await prisma.promotion.create({
         data: {
             id: uuidv4(),
-            tour_id: tour.id,
+            tourId: tour.id,
             name: "Diskon 10% Weekend",
             description:
                 "Nikmati diskon 10% untuk setiap pembelian tiket di akhir pekan!",
-            discount_type: DiscountType.percentage,
-            discount_value: 10.0,
-            max_discount: 20000,
-            min_spend: 50000,
+            discountType: DiscountType.PERCENTAGE,
+            discountValue: 10.0,
+            maxDiscount: 20000,
+            minSpend: 50000,
             quota: 100,
-            used_quota: 0,
-            start_date: new Date(),
-            end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-            is_active: true,
-            created_at: new Date(),
-            updated_at: new Date(),
+            usedQuota: 0,
+            startDate: Date.now(),
+            endDate: AddAFewMonthsFromNow(1),
+            isActive: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     });
 
@@ -425,22 +438,22 @@ async function main() {
     const voucher = await prisma.voucher.create({
         data: {
             id: uuidv4(),
-            facility_id: facility.id,
+            facilityId: facility.id,
             code: "VOUCHER123",
             name: "Voucher Parkir Gratis",
             description: "Dapatkan parkir gratis untuk 1 jam pertama.",
-            discount_type: DiscountType.fixed,
-            discount_value: 5000,
-            max_discount: 5000,
-            min_spend: 0,
+            discountType: DiscountType.FIXED,
+            discountValue: 5000,
+            maxDiscount: 5000,
+            minSpend: 0,
             quota: 50,
-            used_quota: 0,
-            user_id: null,
-            start_date: new Date(),
-            end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)),
-            is_active: true,
-            created_at: new Date(),
-            updated_at: new Date(),
+            usedQuota: 0,
+            userId: null,
+            startDate: Date.now(),
+            endDate: AddAFewMonthsFromNow(2),
+            isActive: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     });
 
@@ -448,11 +461,11 @@ async function main() {
     await prisma.userPromotion.create({
         data: {
             id: uuidv4(),
-            user_id: user.id,
-            promotion_id: promotion.id,
-            is_used: false,
-            used_at: null,
-            created_at: new Date(),
+            userId: user.id,
+            promotionId: promotion.id,
+            isUsed: false,
+            usedAt: null,
+            createdAt: Date.now(),
         },
     });
 
@@ -460,48 +473,45 @@ async function main() {
     await prisma.userVoucher.create({
         data: {
             id: uuidv4(),
-            user_id: user.id,
-            voucher_id: voucher.id,
-            is_used: false,
-            used_at: null,
-            created_at: new Date(),
+            userId: user.id,
+            voucherId: voucher.id,
+            isUsed: false,
+            usedAt: null,
+            createdAt: Date.now(),
         },
     });
 
     const adminRole = await prisma.role.findFirst({
-        where: { name: "admin_system" },
+        where: { name: roleBase.DEV },
     });
 
     if (!adminRole) {
-        throw new Error("Role admin_system tidak ditemukan.");
+        throw new Error("Role dev tidak ditemukan.");
     }
 
     const admin = await prisma.user.findFirst({
         where: {
             roles: {
                 some: {
-                    role_id: adminRole.id,
+                    roleId: adminRole.id,
                 },
             },
         },
     });
 
     if (!admin) {
-        throw new Error(
-            `${admin}`
-            // "Pastikan ada data user dan admin sebelum menjalankan seeder."
-        );
+        throw new Error(`${admin}`);
     }
 
     // Seeder untuk CoinSetting
     const coinSetting = await prisma.coinSetting.create({
         data: {
             id: uuidv4(),
-            price_per_coin: 1000,
-            min_purchase: 10,
-            max_purchase: 10000,
-            created_at: new Date(),
-            updated_at: new Date(),
+            pricePerCoin: 1000,
+            minPurchase: 10,
+            maxPurchase: 10000,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     });
 
@@ -509,28 +519,28 @@ async function main() {
     const coinTopup = await prisma.coinTopup.create({
         data: {
             id: uuidv4(),
-            user_id: user.id,
-            payment_ref: `PAY-${uuidv4()}`,
+            userId: user.id,
+            paymentRef: `PAY-${uuidv4()}`,
             amount: 100,
-            price_total: 100000,
-            payment_status: ProcessStatus.success,
-            payment_method: "bank_transfer",
-            created_at: new Date(),
-            updated_at: new Date(),
+            priceTotal: 100000,
+            paymentStatus: ProcessStatus.SUCCESS,
+            paymentMethod: "bank_transfer",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     });
 
     // Seeder untuk UserCoin
     const userCoin = await prisma.userCoin.upsert({
-        where: { user_id: user.id },
+        where: { userId: user.id },
         update: { balance: 500 },
         create: {
             id: uuidv4(),
-            user_id: user.id,
+            userId: user.id,
             balance: 500,
-            last_reset_at: null,
-            created_at: new Date(),
-            updated_at: new Date(),
+            lastResetAt: null,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         },
     });
 
@@ -538,12 +548,12 @@ async function main() {
     await prisma.coinTransaction.create({
         data: {
             id: uuidv4(),
-            user_id: user.id,
-            transaction_type: TransactionType.topup,
+            userId: user.id,
+            transactionType: TransactionType.TOPUP,
             amount: 100,
-            price_total: 100000,
-            related_id: coinTopup.id,
-            created_at: new Date(),
+            priceTotal: 100000,
+            relatedId: coinTopup.id,
+            createdAt: Date.now(),
         },
     });
 
@@ -551,11 +561,11 @@ async function main() {
     await prisma.coinReset.create({
         data: {
             id: uuidv4(),
-            admin_id: admin.id,
-            user_id: user.id,
-            previous_balance: 500,
-            reset_reason: "Reset tahunan",
-            reset_at: new Date(),
+            adminId: admin.id,
+            userId: user.id,
+            previousBalance: 500,
+            resetReason: "Reset tahunan",
+            resetAt: Date.now(),
         },
     });
 
@@ -563,14 +573,12 @@ async function main() {
     await prisma.coinResetRule.create({
         data: {
             id: uuidv4(),
-            reset_enabled: true,
-            reset_date: new Date(
-                new Date().setFullYear(new Date().getFullYear() + 1)
-            ),
-            reset_time: new Date(),
-            reset_frequency: ResetFrequency.yearly,
-            reset_admin_id: admin.id,
-            last_updated_at: new Date(),
+            resetEnabled: true,
+            resetDate: addAFewYearsFromNow(1),
+            resetTime: Date.now(),
+            resetFrequency: ResetFrequency.YEARLY,
+            resetAdminId: admin.id,
+            lastUpdatedAt: Date.now(),
         },
     });
 }
