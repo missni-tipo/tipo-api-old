@@ -5,7 +5,7 @@ import {
     RegisterDto,
     ResendTokenDto,
     UpdatePasswordDto,
-    VerifyTokenDto,
+    TokenVerificationDto,
 } from "../dtos/auth.dto";
 
 export class AuthController {
@@ -35,9 +35,9 @@ export class AuthController {
         }
     }
 
-    async verifyToken(req: Request, res: Response) {
-        const { email, token }: VerifyTokenDto = req.body;
-        const verify = await this.authService.verifyToken(email, token);
+    async tokenVerification(req: Request, res: Response) {
+        const { email, token }: TokenVerificationDto = req.body;
+        const verify = await this.authService.tokenVerification(email, token);
 
         res.status(200).json({
             status: true,
@@ -51,7 +51,7 @@ export class AuthController {
 
     async resendToken(req: Request, res: Response) {
         const { email }: ResendTokenDto = req.body;
-        await this.authService.updateVerifyToken(email);
+        await this.authService.updateTokenVerification(email);
 
         res.status(200).json({
             status: true,

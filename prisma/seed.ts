@@ -5,7 +5,7 @@ import {
     ResetFrequency,
     Status,
     TransactionType,
-    VerificationTokenType,
+    TokenVerificationType,
 } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -198,15 +198,15 @@ async function main() {
         skipDuplicates: true,
     });
 
-    // Seed VerificationToken
-    await prisma.verificationToken.createMany({
+    // Seed TokenVerification
+    await prisma.tokenVerification.createMany({
         data: [
             {
                 id: uuidv4(),
                 userId: usersData[0].id,
                 email: usersData[0].email,
                 token: await hashValue(generateVerifyCode()),
-                type: VerificationTokenType.EMAIL_VERIFICATION,
+                type: TokenVerificationType.EMAIL_VERIFICATION,
                 isUsed: true,
                 expires: Date.now() + 1000 * 60 * 30,
                 createdAt: Date.now(),

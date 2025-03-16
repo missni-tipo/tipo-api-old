@@ -24,7 +24,7 @@ export class AuthValidator {
             .withMessage("Email is required"),
     ];
 
-    static verifyTokenValidation = [
+    static tokenVerificationValidation = [
         body("email").isEmail().withMessage("Invalid email address"),
         body("token").notEmpty().withMessage("Token is required"),
     ];
@@ -59,6 +59,12 @@ export class AuthValidator {
     ];
 
     static refreshTokenValidation = [
+        body("refreshToken")
+            .notEmpty()
+            .withMessage("Refresh Token is required"),
+    ];
+
+    static logoutValidation = [
         body("refreshToken")
             .notEmpty()
             .withMessage("Refresh Token is required"),

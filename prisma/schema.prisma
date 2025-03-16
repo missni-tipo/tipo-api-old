@@ -31,7 +31,7 @@ model User {
 
   accounts             OAuthAccount[]
   sessions             Session[]
-  verification         VerificationToken[]
+  verification         TokenVerification[]
   roles                UserRole[]
   transactions         CoinTransaction[]
   userCoins            UserCoin[] 
@@ -80,19 +80,19 @@ model Session {
   @@map("sessions")
 }
 
-model VerificationToken {
+model TokenVerification {
   id         String              @id @default(uuid())
   userId    String               @map("user_id")  @unique
   email      String               @unique
   token      String                @unique
-  type       VerificationTokenType
+  type       TokenVerificationType
   expires    BigInt
   isUsed    Boolean              @map("is_used")  @default(false)
   createdAt BigInt               @map("created_at")  @default(dbgenerated("extract(epoch FROM now()) * 1000"))
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("verification_tokens")
+  @@map("token_verifications")
 }
 
 model Role {
@@ -410,7 +410,7 @@ model AuditLog {
 }
 
 
-enum VerificationTokenType {
+enum TokenVerificationType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
 }

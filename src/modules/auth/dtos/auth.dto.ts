@@ -8,7 +8,7 @@ export interface ResendTokenDto {
     email: string;
 }
 
-export interface VerifyTokenDto {
+export interface TokenVerificationDto {
     email: string;
     token: string;
 }

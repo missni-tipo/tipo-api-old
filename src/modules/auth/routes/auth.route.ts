@@ -23,9 +23,9 @@ router.post(
 
 router.post(
     "/verify-token",
-    AuthValidator.verifyTokenValidation,
+    AuthValidator.tokenVerificationValidation,
     AuthValidator.validate,
-    authController.verifyToken.bind(authController)
+    authController.tokenVerification.bind(authController)
 );
 
 router.put(
@@ -44,6 +44,7 @@ router.post(
 
 router.post(
     "/logout",
+    AuthValidator.logoutValidation,
     AuthValidator.validate,
     authController.logout.bind(authController)
 );

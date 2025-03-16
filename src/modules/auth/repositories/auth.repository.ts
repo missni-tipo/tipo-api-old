@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import { BaseSessionRepository } from "../../../shared/repositories/session.repository";
 import { OAuthAccountData } from "../../../shared/models/oAuthAccount.model";
 import { BaseOAuthAccountRepository } from "../../../shared/repositories/oAuthAccount.repository";
-import { BaseVerificationTokenRepository } from "../../../shared/repositories/verificationToken.repository";
+import { BaseTokenVerificationRepository } from "../../../shared/repositories/tokenVerification.repository";
 import { BaseUserRepository } from "../../../shared/repositories/user.repository";
-import { VerificationTokenData } from "../../../shared/models/verificationToken.model";
+import { TokenVerificationData } from "../../../shared/models/tokenVerification.model";
 import { UserData } from "../../../shared/models/user.model";
 import { SessionData } from "../../../shared/models/session.model";
 import { BaseUserRoleRepository } from "../../../shared/repositories/userRole.repository";
@@ -12,12 +11,10 @@ import { BaseRoleRepository } from "../../../shared/repositories/role.repository
 import { RoleData } from "../../../shared/models/role.model";
 import { UserRoleData } from "../../../shared/models/userRole.mode";
 
-const prisma = new PrismaClient();
-
 export class AuthRepository {
     private sessionRepo: BaseSessionRepository;
     private oAuthAccountRepo: BaseOAuthAccountRepository;
-    private verificationTokenRepo: BaseVerificationTokenRepository;
+    private tokenVerificationRepo: BaseTokenVerificationRepository;
     private userRepo: BaseUserRepository;
     private userRoleRepo: BaseUserRoleRepository;
     private roleRepo: BaseRoleRepository;
@@ -25,7 +22,7 @@ export class AuthRepository {
     constructor() {
         this.sessionRepo = new BaseSessionRepository();
         this.oAuthAccountRepo = new BaseOAuthAccountRepository();
-        this.verificationTokenRepo = new BaseVerificationTokenRepository();
+        this.tokenVerificationRepo = new BaseTokenVerificationRepository();
         this.userRepo = new BaseUserRepository();
         this.userRoleRepo = new BaseUserRoleRepository();
         this.roleRepo = new BaseRoleRepository();
@@ -84,25 +81,25 @@ export class AuthRepository {
         return await this.oAuthAccountRepo.createOAuthAccount(data);
     }
 
-    async findVerificationToken(data: Partial<VerificationTokenData>) {
-        return await this.verificationTokenRepo.findVerificationToken(data);
+    async findTokenVerification(data: Partial<TokenVerificationData>) {
+        return await this.tokenVerificationRepo.findTokenVerification(data);
     }
 
-    async createVerificationToken(data: VerificationTokenData) {
-        return await this.verificationTokenRepo.createVerificationToken(data);
+    async createTokenVerification(data: TokenVerificationData) {
+        return await this.tokenVerificationRepo.createTokenVerification(data);
     }
 
-    async updateVerificationToken(
+    async updateTokenVerification(
         email: string,
-        data: Partial<VerificationTokenData>
+        data: Partial<TokenVerificationData>
     ) {
-        return await this.verificationTokenRepo.updateVerificationToken(
+        return await this.tokenVerificationRepo.updateTokenVerification(
             email,
             data
         );
     }
 
-    async deleteVerificationToken(token: string) {
-        return await this.verificationTokenRepo.deleteVerificationToken(token);
+    async deleteTokenVerification(token: string) {
+        return await this.tokenVerificationRepo.deleteTokenVerification(token);
     }
 }

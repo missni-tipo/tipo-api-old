@@ -21,107 +21,128 @@ export class AuthService {
         email: string,
         role: string
     ): Promise<Boolean> {
-        const existingUser = await this.authRepo.findUserEmail(email);
+        try {
+            const existingUser = await this.authRepo.findUserEmail(email);
+            if (existingUser) {
+                if (
+                    existingUser.passwordHash !== null ||
+                    existingUser.status !== "INACTIVE"
+                ) {
+                    throw new ApiError(400, "Email is already registered");
+                }
 
-        if (existingUser) {
-            if (
-                existingUser.passwordHash !== null ||
-                existingUser.status !== "INACTIVE"
-            ) {
-                throw new ApiError(400, "Email is already registered");
+                await this.updateTokenVerification(existingUser.email);
+                return false;
             }
 
-            await this.updateVerifyToken(existingUser.email);
-            return false;
+            const existingRole = await this.authRepo.findRole({
+                name: role.toLowerCase(),
+            });
+            if (!existingRole) throw new ApiError(404, "Role Not Found");
+
+            const createUser = await this.authRepo.createUser({
+                fullName,
+                email,
+            });
+
+            await this.authRepo.createUserRole({
+                userId: createUser.id,
+                roleId: existingRole.id,
+            });
+
+            const generateToken = generateVerifyCode();
+            const hashedToken = await hashValue(generateToken);
+
+            try {
+                await this.authRepo.createTokenVerification({
+                    email: createUser.email,
+                    userId: createUser.id,
+                    token: hashedToken,
+                    expires: BigInt(Date.now() + 1 * 60 * 1000),
+                    isUsed: false,
+                    type: $Enums.TokenVerificationType.EMAIL_VERIFICATION,
+                });
+            } catch (error) {
+                console.error("Error creating verification token:", error);
+                throw new ApiError(500, "Register Failed");
+            }
+
+            return true;
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error("Error in register user:", err.message);
+            throw new ApiError(500, "Register Failed");
         }
-
-        const existingRole = await this.authRepo.findRole({
-            name: role.toLowerCase(),
-        });
-
-        if (!existingRole) throw new ApiError(404, "Role not found");
-
-        const createUser = await this.authRepo.createUser({
-            fullName: fullName,
-            email: email,
-        });
-
-        await this.authRepo.createUserRole({
-            userId: createUser.id,
-            roleId: existingRole.id,
-        });
-
-        const generateToken = generateVerifyCode();
-
-        const hashedToken = await hashValue(generateToken);
-        console.log({ generateToken });
-        console.log({ hashedToken }); // debug for testing
-
-        await this.authRepo.createVerificationToken({
-            email: createUser.email,
-            userId: createUser.id,
-            token: hashedToken,
-            expires: BigInt(Date.now() + 1 * 60 * 1000),
-            isUsed: false,
-            type: $Enums.VerificationTokenType.EMAIL_VERIFICATION,
-        });
-
-        return true;
     }
 
-    async updateVerifyToken(email: string): Promise<Boolean> {
-        const storedToken = await this.authRepo.findVerificationToken({
-            email,
-        });
+    async updateTokenVerification(email: string): Promise<Boolean> {
+        try {
+            const storedToken = await this.authRepo.findTokenVerification({
+                email,
+            });
+            if (!storedToken) throw new ApiError(404, "Token Not Found");
 
-        if (!storedToken) throw new ApiError(404, "Token not found");
+            if (
+                Date.now() < Number(storedToken?.expires) &&
+                !storedToken.isUsed
+            ) {
+                throw new ApiError(
+                    400,
+                    "Token is still valid and has not expired"
+                );
+            }
 
-        if (
-            Date.now() < Number(storedToken?.expires) &&
-            storedToken.isUsed === false
-        )
-            throw new ApiError(400, "Token is still valid and has not expired");
+            const generateToken = generateVerifyCode();
+            const hashedToken = await hashValue(generateToken);
+            console.log({ generateToken }); //for debuging
+            console.log({ hashedToken }); //for debuging
 
-        const generateToken = generateVerifyCode();
-        const hashedToken = await hashValue(generateToken);
-        console.log({ generateToken });
-        console.log({ hashedToken });
+            await this.authRepo.updateTokenVerification(email, {
+                token: hashedToken,
+                expires: BigInt(Date.now() + 1 * 60 * 1000),
+                isUsed: false,
+                type: $Enums.TokenVerificationType.EMAIL_VERIFICATION,
+            });
 
-        await this.authRepo.updateVerificationToken(email, {
-            token: hashedToken,
-            expires: BigInt(Date.now() + 1 * 60 * 1000),
-            isUsed: false,
-            type: $Enums.VerificationTokenType.EMAIL_VERIFICATION,
-        });
-
-        return true;
+            return true;
+        } catch (error) {
+            console.error("Error in Update Verify Token:", error);
+            throw new ApiError(500, "Updated Token Failed");
+        }
     }
 
-    async verifyToken(
+    async tokenVerification(
         email: string,
         token: string
     ): Promise<Partial<UserData> | null> {
-        const storedToken = await this.authRepo.findVerificationToken({
-            email,
-        });
+        try {
+            const storedToken = await this.authRepo.findTokenVerification({
+                email,
+            });
 
-        if (!storedToken) throw new ApiError(404, "Token not found");
+            if (!storedToken) throw new ApiError(404, "Token not found");
 
-        const isTokenValid = await verifyHashedValue(token, storedToken.token);
+            const isTokenValid = await verifyHashedValue(
+                token,
+                storedToken.token
+            );
+            if (
+                !isTokenValid ||
+                storedToken.isUsed ||
+                Date.now() > Number(storedToken.expires)
+            ) {
+                throw new ApiError(400, "Invalid Token");
+            }
 
-        if (!isTokenValid) throw new ApiError(400, "Invalid token");
+            await this.authRepo.updateTokenVerification(storedToken.email, {
+                isUsed: true,
+            });
 
-        if (storedToken.isUsed)
-            throw new ApiError(400, "Token has already been used");
-
-        if (Date.now() > Number(storedToken.expires))
-            throw new ApiError(400, "Token expired");
-
-        await this.authRepo.updateVerificationToken(storedToken.email, {
-            isUsed: true,
-        });
-
-        return { id: storedToken.userId, email: storedToken.email };
+            return { id: storedToken.userId, email: storedToken.email };
+        } catch (error) {
+            console.error("Error in Token Verification:", error);
+            throw new ApiError(500, "Token Verification Failed");
+        }
     }
 
     async updatePassword(
@@ -129,39 +150,36 @@ export class AuthService {
         oldPassword: string,
         newPassword: string
     ): Promise<Partial<UserData>> {
-        const user = await this.authRepo.findUserById(userId);
-        if (!user) throw new ApiError(400, "User Not Found");
+        try {
+            const user = await this.authRepo.findUserById(userId);
+            if (!user) throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
 
-        const verificationToken = await this.authRepo.findVerificationToken({
-            email: user.email,
-        });
-
-        if (verificationToken && !verificationToken.isUsed)
-            throw new ApiError(400, "Account has not been verified");
-
-        if (user.passwordHash) {
-            if (!oldPassword)
-                throw new ApiError(400, "Old Password has been required");
-
-            const isMatch = await verifyHashedValue(
-                oldPassword,
-                user.passwordHash
+            const verificationToken = await this.authRepo.findTokenVerification(
+                { email: user.email }
             );
-            if (!isMatch) throw new ApiError(400, "Incorrect old password");
+            if (verificationToken && !verificationToken.isUsed) {
+                throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
+            }
+
+            if (
+                user.passwordHash &&
+                (!oldPassword ||
+                    !(await verifyHashedValue(oldPassword, user.passwordHash)))
+            ) {
+                throw new ApiError(400, "PASSWORD_UPDATE_FAILED");
+            }
+
+            const hashedPassword = await hashValue(newPassword);
+            await this.authRepo.updatePassword(user.id, {
+                passwordHash: hashedPassword,
+                status: "ACTIVE",
+            });
+
+            return { id: user.id, email: user.email, fullName: user.fullName };
+        } catch (error) {
+            console.error("Error in updatePassword:", error);
+            throw new ApiError(500, "PASSWORD_UPDATE_FAILED");
         }
-
-        const hashedPassword = await hashValue(newPassword);
-
-        await this.authRepo.updatePassword(user.id, {
-            passwordHash: hashedPassword,
-            status: "ACTIVE",
-        });
-
-        return {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-        };
     }
 
     async loginUser(
@@ -170,56 +188,61 @@ export class AuthService {
         ip: string,
         userAgent: string
     ) {
-        const user = await this.authRepo.findUserEmail(email);
-        if (!user) throw new ApiError(400, "Invalid email or password");
+        try {
+            const user = await this.authRepo.findUserEmail(email);
+            if (
+                !user ||
+                !user.passwordHash ||
+                !(await verifyHashedValue(password, user.passwordHash))
+            ) {
+                throw new ApiError(400, "LOGIN_FAILED");
+            }
 
-        if (!user.passwordHash)
-            throw new ApiError(400, "Account has not been verified");
+            const userRole = await this.authRepo.findUserRole(user.id);
+            if (!userRole) throw new ApiError(400, "LOGIN_FAILED");
 
-        const isPasswordValid = await verifyHashedValue(
-            password,
-            user.passwordHash
-        );
-        if (!isPasswordValid)
-            throw new ApiError(400, "Invalid email or password");
+            const role = await this.authRepo.findRoleById(userRole.roleId);
+            const userPayload = {
+                userId: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                roleId: role?.id,
+                role: role?.name,
+            };
 
-        const userRole = await this.authRepo.findUserRole(user.id);
-        if (!userRole) throw new ApiError(400, "User role not found");
+            const accessToken = generateJWTToken(
+                userPayload,
+                config.JWT_SECRET,
+                "1h"
+            );
+            const refreshToken = generateJWTToken(
+                userPayload,
+                config.JWT_REFRESH_SECRET,
+                "7d"
+            );
 
-        const role = await this.authRepo.findRoleById(userRole.roleId);
+            await this.authRepo.createSession({
+                userId: user.id,
+                refreshToken,
+                expires: BigInt(Date.now() / 1000 + 7 * 24 * 60 * 60),
+                ip,
+                userAgent,
+            });
 
-        const userPayload = {
-            userId: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            role: role?.name,
-        };
-
-        const accessToken = generateJWTToken(
-            userPayload,
-            config.JWT_SECRET,
-            "1h"
-        );
-
-        const refreshToken = generateJWTToken(
-            userPayload,
-            config.JWT_REFRESH_SECRET,
-            "7d"
-        );
-
-        await this.authRepo.createSession({
-            userId: user.id,
-            refreshToken,
-            expires: BigInt(Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60),
-            ip,
-            userAgent,
-        });
-
-        return { accessToken, refreshToken };
+            return { accessToken, refreshToken };
+        } catch (error) {
+            console.error("Error in loginUser:", error);
+            throw new ApiError(500, "LOGIN_FAILED");
+        }
     }
 
     async logoutUser(refreshToken: string) {
-        return await this.authRepo.deleteSession(refreshToken);
+        try {
+            return await this.authRepo.deleteSession(refreshToken);
+        } catch (error) {
+            console.error("Error in logoutUser:", error);
+            throw new ApiError(500, "LOGOUT_FAILED");
+        }
     }
 
     async refreshToken(oldRefreshToken: string) {
@@ -227,27 +250,24 @@ export class AuthService {
             const session = await this.authRepo.findSession({
                 refreshToken: oldRefreshToken,
             });
-            if (!session) throw new ApiError(400, "Invalid refresh token");
+            if (!session) throw new ApiError(400, "REFRESH_FAILED");
 
             const decoded = jwt.verify(
                 oldRefreshToken,
                 config.JWT_REFRESH_SECRET
             ) as { userId: string };
-
-            console.log({ decoded }); // for debuging
-
             const user = await this.authRepo.findUserById(decoded.userId);
-            if (!user) throw new ApiError(404, "User not found");
+            if (!user) throw new ApiError(400, "REFRESH_FAILED");
 
             const userRole = await this.authRepo.findUserRole(user.id);
-            if (!userRole) throw new ApiError(400, "User role not found");
+            if (!userRole) throw new ApiError(400, "REFRESH_FAILED");
 
             const role = await this.authRepo.findRoleById(userRole.roleId);
-
             const userPayload = {
                 userId: user.id,
                 email: user.email,
                 fullName: user.fullName,
+                roleId: role?.id,
                 role: role?.name,
             };
 
@@ -258,8 +278,9 @@ export class AuthService {
             );
 
             return { accessToken: newAccessToken };
-        } catch (err) {
-            throw new ApiError(400, "Refresh token is invalid");
+        } catch (error) {
+            console.error("Error in refreshToken:", error);
+            throw new ApiError(500, "REFRESH_FAILED");
         }
     }
 

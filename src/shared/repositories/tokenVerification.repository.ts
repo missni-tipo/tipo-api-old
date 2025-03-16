@@ -1,20 +1,19 @@
-import { PrismaClient, VerificationToken } from "@prisma/client";
+import { PrismaClient, TokenVerification } from "@prisma/client";
 import { BaseRepository } from "./base.repository";
-import { VerificationTokenData } from "../models/verificationToken.model";
-import { bigint } from "zod";
+import { TokenVerificationData } from "../models/tokenVerification.model";
 
 const prisma = new PrismaClient();
 
-export class BaseVerificationTokenRepository extends BaseRepository<VerificationToken> {
+export class BaseTokenVerificationRepository extends BaseRepository<TokenVerification> {
     constructor() {
-        super(prisma.verificationToken);
+        super(prisma.tokenVerification);
     }
 
-    async findVerificationToken(data: Partial<VerificationTokenData>) {
+    async findTokenVerification(data: Partial<TokenVerificationData>) {
         return await this.findOne(data);
     }
 
-    async createVerificationToken(data: VerificationTokenData) {
+    async createTokenVerification(data: TokenVerificationData) {
         return await this.create({
             userId: data.userId,
             email: data.email,
@@ -24,9 +23,9 @@ export class BaseVerificationTokenRepository extends BaseRepository<Verification
         });
     }
 
-    async updateVerificationToken(
+    async updateTokenVerification(
         email: string,
-        data: Partial<VerificationTokenData>
+        data: Partial<TokenVerificationData>
     ) {
         return await this.update(
             { email },
@@ -40,7 +39,7 @@ export class BaseVerificationTokenRepository extends BaseRepository<Verification
         );
     }
 
-    async deleteVerificationToken(token: string) {
+    async deleteTokenVerification(token: string) {
         return await this.delete({ token: token });
     }
 }
