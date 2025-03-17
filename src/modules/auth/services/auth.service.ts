@@ -4,7 +4,7 @@ import {
     generateVerifyCode,
 } from "../../../utils/token.util";
 import { $Enums } from "@prisma/client";
-import { hashValue, verifyHashedValue } from "../../../utils/password.util";
+import { hashValue, verifyHashedValue } from "../../../utils/hashing";
 import { UserData } from "../../../shared/models/user.model";
 import { ApiError } from "../../../middlewares/error.middleware";
 import jwt from "jsonwebtoken";

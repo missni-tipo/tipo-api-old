@@ -17,7 +17,7 @@ import {
     addAFewYearsFromNow,
 } from "../src/utils/dateTimeManipulation.util";
 import { generateVerifyCode } from "../src/utils/token.util";
-import { hashValue } from "../src/utils/password.util";
+import { hashValue } from "../src/utils/hashing";
 
 const prisma = new PrismaClient();
 
