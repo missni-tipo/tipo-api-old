@@ -15,8 +15,8 @@ export class BaseRepository<T> {
         });
     }
 
-    async findMany(where: Partial<T>): Promise<T[] | null> {
-        return this.model.findMany({ where });
+    async findMany(params: Record<string, any> = {}): Promise<T[] | null> {
+        return this.model.findMany(params);
     }
 
     async findOne(where: Partial<T>): Promise<T | null> {
