@@ -339,6 +339,8 @@ model CoinTopup {
   user User @relation(fields: [userId], references: [id])
 
   @@map("coin_topups")
+  @@index([userId, createdAt])
+  CoinTransaction CoinTransaction[]
 }
 
 model UserCoin {
@@ -346,6 +348,7 @@ model UserCoin {
   userId       String   @map("user_id") @unique
   balance      Int      @default(0)
   lastResetAt  BigInt?  @map("last_reset_at") @default(dbgenerated("extract(epoch FROM now()) * 1000"))
+  version      Int      @default(1) // Optimistic locking
   createdAt    BigInt   @map("created_at") @default(dbgenerated("extract(epoch FROM now()) * 1000"))
   updatedAt    BigInt?  @map("updated_at")
 
@@ -353,6 +356,7 @@ model UserCoin {
 
   @@map("user_coins")
 }
+
 model CoinTransaction {
   id              String          @id @default(uuid())
   userId          String          @map("user_id")
@@ -362,9 +366,13 @@ model CoinTransaction {
   relatedId       String?         @map("related_id")
   createdAt       BigInt          @map("created_at") @default(dbgenerated("extract(epoch FROM now()) * 1000"))
 
+  relatedTopup    CoinTopup?      @relation(fields: [relatedId], references: [id])
+
   user User @relation(fields: [userId], references: [id])
 
   @@map("coin_transactions")
+  @@index([userId, createdAt])
+  @@index([transactionType, createdAt])
 }
 
 model CoinReset {
