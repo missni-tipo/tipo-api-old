@@ -1,6 +1,4 @@
-import { body, validationResult } from "express-validator";
-import { Request, Response, NextFunction } from "express";
-import { ApiError } from "../../../middlewares/error.middleware";
+import { body } from "express-validator";
 
 export class AuthValidator {
     static registerValidation = [
@@ -69,28 +67,4 @@ export class AuthValidator {
             .notEmpty()
             .withMessage("Refresh Token is required"),
     ];
-
-    static validate = (req: Request, res: Response, next: NextFunction) => {
-        const errors = validationResult(req);
-
-        const mapErrors = () => {
-            return errors.array().reduce(
-                (acc, err) => {
-                    const field = (err as any).path;
-
-                    if (!acc[field]) acc[field] = [];
-
-                    acc[field].push(err.msg);
-
-                    return acc;
-                },
-                {} as Record<string, string[]>
-            );
-        };
-
-        if (!errors.isEmpty()) {
-            throw new ApiError(400, "Invalid Input", mapErrors());
-        }
-        next();
-    };
 }
