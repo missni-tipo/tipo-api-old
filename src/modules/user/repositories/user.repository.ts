@@ -1,3 +1,4 @@
+import { Status } from "@prisma/client";
 import { UserData } from "../../../shared/models/user.model";
 import { BaseUserRepository } from "../../../shared/repositories/user.repository";
 
@@ -21,16 +22,16 @@ export class UserRepository {
     }
 
     async deactivateUser(id: string): Promise<boolean> {
-        const updatedUser = await this.userRepo.updateById(id, {
-            status: "INACTIVE",
+        const updatedUser = await this.userRepo.updateUser(id, {
+            status: Status.INACTIVE,
         });
 
         return updatedUser ? true : false;
     }
 
     async reactivateUser(id: string): Promise<boolean> {
-        const updatedUser = await this.userRepo.updateById(id, {
-            status: "ACTIVE",
+        const updatedUser = await this.userRepo.updateUser(id, {
+            status: Status.ACTIVE,
         });
 
         return updatedUser ? true : false;
