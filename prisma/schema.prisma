@@ -98,7 +98,8 @@ model TokenVerification {
 model Role {
   id          String     @id @default(uuid())
   name        String     @unique
-  description String?
+  description String
+  status      Status      @default(INACTIVE)
 
   user_roles  UserRole[]
 
