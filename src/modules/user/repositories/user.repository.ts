@@ -1,14 +1,11 @@
 import { UserData } from "../../../shared/models/user.model";
 import { BaseUserRepository } from "../../../shared/repositories/user.repository";
-import { BaseUserRoleRepository } from "../../../shared/repositories/userRole.repository";
 
 export class UserRepository {
     private userRepo: BaseUserRepository;
-    private userRoleRepo: BaseUserRoleRepository;
 
     constructor() {
         this.userRepo = new BaseUserRepository();
-        this.userRoleRepo = new BaseUserRoleRepository();
     }
 
     async findUserById(id: string) {
