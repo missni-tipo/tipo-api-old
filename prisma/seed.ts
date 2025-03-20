@@ -27,9 +27,21 @@ async function main() {
     // Seed roles
     await prisma.role.createMany({
         data: [
-            { name: roleBase.CUSTOMER, description: "Regular user" },
-            { name: roleBase.ADMIN, description: "Tour Admin" },
-            { name: roleBase.DEV, description: "Developer or System Admin" },
+            {
+                name: roleBase.CUSTOMER,
+                description: "Regular user",
+                status: Status.ACTIVE,
+            },
+            {
+                name: roleBase.ADMIN,
+                description: "Tour Admin",
+                status: Status.ACTIVE,
+            },
+            {
+                name: roleBase.DEV,
+                description: "Developer or System Admin",
+                status: Status.ACTIVE,
+            },
         ],
         skipDuplicates: true,
     });
