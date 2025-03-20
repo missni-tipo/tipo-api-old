@@ -43,7 +43,7 @@ async function main() {
         email: string;
         phoneNumber: string;
         passwordHash: string;
-        pin: string;
+        pinHash: string;
         status: Status;
         picture: string;
         profileCompletedAt: number | null;
@@ -62,7 +62,7 @@ async function main() {
             email: "budi.santoso@example.com",
             phoneNumber: "081234567891",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: date,
@@ -78,7 +78,7 @@ async function main() {
             email: "siti.aminah@example.com",
             phoneNumber: "082198765432",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: Date.now(),
@@ -94,7 +94,7 @@ async function main() {
             email: "doni.prasetyo@example.com",
             phoneNumber: "081312345678",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: null,
@@ -110,7 +110,7 @@ async function main() {
             email: "linda.pertiwi@example.com",
             phoneNumber: "081256789012",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: null,
@@ -124,7 +124,7 @@ async function main() {
         usersData.map(async (user) => ({
             ...user,
             passwordHash: await hashValue(user.passwordHash),
-            pin: await hashValue(user.pin),
+            pinHash: await hashValue(user.pinHash),
         }))
     );
 

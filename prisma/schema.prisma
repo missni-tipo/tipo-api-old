@@ -20,7 +20,7 @@ model User {
   email                String    @unique
   phoneNumber         String?   @map("phone_number") @unique
   passwordHash        String?   @map("password_hash")
-  pin                  String?
+  pinHash              String?
   status               Status    @default(INACTIVE)
   picture              String?
   birthdate            DateTime?
