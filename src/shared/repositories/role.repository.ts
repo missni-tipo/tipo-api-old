@@ -17,10 +17,15 @@ export class BaseRoleRepository extends BaseRepository<Role> {
         return await this.findById(id);
     }
 
-    async createRole(name: string, description: string) {
-        return await this.create({
-            name,
-            description,
-        });
+    async findRoles(data: Partial<RoleData>) {
+        return await this.findMany(data);
+    }
+
+    async createRole(data: Partial<RoleData>) {
+        return await this.create(data);
+    }
+
+    async updateRole(id: string, data: Partial<RoleData>) {
+        return await this.updateById(id, data);
     }
 }

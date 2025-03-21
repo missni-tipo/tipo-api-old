@@ -17,7 +17,7 @@ import {
     addAFewYearsFromNow,
 } from "../src/utils/dateTimeManipulation.util";
 import { generateVerifyCode } from "../src/utils/token.util";
-import { hashValue } from "../src/utils/password.util";
+import { hashValue } from "../src/utils/hashing";
 
 const prisma = new PrismaClient();
 
@@ -27,9 +27,21 @@ async function main() {
     // Seed roles
     await prisma.role.createMany({
         data: [
-            { name: roleBase.CUSTOMER, description: "Regular user" },
-            { name: roleBase.ADMIN, description: "Tour Admin" },
-            { name: roleBase.DEV, description: "Developer or System Admin" },
+            {
+                name: roleBase.CUSTOMER,
+                description: "Regular user",
+                status: Status.ACTIVE,
+            },
+            {
+                name: roleBase.ADMIN,
+                description: "Tour Admin",
+                status: Status.ACTIVE,
+            },
+            {
+                name: roleBase.DEV,
+                description: "Developer or System Admin",
+                status: Status.ACTIVE,
+            },
         ],
         skipDuplicates: true,
     });
@@ -43,7 +55,7 @@ async function main() {
         email: string;
         phoneNumber: string;
         passwordHash: string;
-        pin: string;
+        pinHash: string;
         status: Status;
         picture: string;
         profileCompletedAt: number | null;
@@ -62,7 +74,7 @@ async function main() {
             email: "budi.santoso@example.com",
             phoneNumber: "081234567891",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: date,
@@ -78,7 +90,7 @@ async function main() {
             email: "siti.aminah@example.com",
             phoneNumber: "082198765432",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: Date.now(),
@@ -94,7 +106,7 @@ async function main() {
             email: "doni.prasetyo@example.com",
             phoneNumber: "081312345678",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: null,
@@ -110,7 +122,7 @@ async function main() {
             email: "linda.pertiwi@example.com",
             phoneNumber: "081256789012",
             passwordHash: "password123",
-            pin: "123456",
+            pinHash: "123456",
             status: Status.ACTIVE,
             picture: "https://picsum.photos/300",
             profileCompletedAt: null,
@@ -124,7 +136,7 @@ async function main() {
         usersData.map(async (user) => ({
             ...user,
             passwordHash: await hashValue(user.passwordHash),
-            pin: await hashValue(user.pin),
+            pinHash: await hashValue(user.pinHash),
         }))
     );
 

@@ -17,9 +17,14 @@ export class BaseUserRepository extends BaseRepository<User> {
         return await this.findById(id);
     }
 
-    async getAllUsers(): Promise<Partial<UserData>[] | null> {
-        const getUsers = this.findMany({});
-        return getUsers;
+    async getUsers(
+        filter: Record<string, string | number> = {},
+        limit?: number
+    ): Promise<Partial<UserData>[] | null> {
+        return this.findMany({
+            where: filter,
+            take: limit,
+        });
     }
 
     async createUser(data: Partial<UserData>) {

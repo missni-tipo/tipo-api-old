@@ -1,6 +1,4 @@
-import { body, validationResult } from "express-validator";
-import { Request, Response, NextFunction } from "express";
-import { ApiError } from "../../../middlewares/error.middleware";
+import { body } from "express-validator";
 
 export class AuthValidator {
     static registerValidation = [
@@ -30,14 +28,24 @@ export class AuthValidator {
     ];
 
     static updatePasswordValidation = [
-        body("userId").trim().notEmpty().withMessage("User Id is required"),
+        body("userId")
+            .trim()
+            .notEmpty()
+            .withMessage("User ID is required")
+            .isUUID()
+            .withMessage("Invalid User ID format"),
+
         body("newPassword")
             .notEmpty()
             .withMessage("New password is required")
-            .isLength({ min: 6 })
-            .withMessage("New password must be at least 6 characters long")
+            .isLength({ min: 8 })
+            .withMessage("New password must be at least 8 characters long")
+            .matches(/\d/)
+            .withMessage("New password must contain at least one number")
+            .matches(/[a-zA-Z]/)
+            .withMessage("New password must contain at least one letter")
             .custom((value, { req }) => {
-                if (value === req.body.oldPassword) {
+                if (req.body.oldPassword && value === req.body.oldPassword) {
                     throw new Error(
                         "New password must be different from old password"
                     );
@@ -69,28 +77,4 @@ export class AuthValidator {
             .notEmpty()
             .withMessage("Refresh Token is required"),
     ];
-
-    static validate = (req: Request, res: Response, next: NextFunction) => {
-        const errors = validationResult(req);
-
-        const mapErrors = () => {
-            return errors.array().reduce(
-                (acc, err) => {
-                    const field = (err as any).path;
-
-                    if (!acc[field]) acc[field] = [];
-
-                    acc[field].push(err.msg);
-
-                    return acc;
-                },
-                {} as Record<string, string[]>
-            );
-        };
-
-        if (!errors.isEmpty()) {
-            throw new ApiError(400, "Invalid Input", mapErrors());
-        }
-        next();
-    };
 }

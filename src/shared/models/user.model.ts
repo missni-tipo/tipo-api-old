@@ -7,7 +7,7 @@ export interface UserData {
     email: string;
     phoneNumber: string | null;
     passwordHash: string | null;
-    pin: string | null;
+    pinHash: string | null;
     status: Status;
     picture: string | null;
     birthdate: Date | null;
