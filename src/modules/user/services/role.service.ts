@@ -1,5 +1,5 @@
 import { Status } from "@prisma/client";
-import { ApiError } from "../../../middlewares/error.middleware";
+import { ApiError } from "../../../middlewares/errorHandler.middleware";
 import { RoleData } from "../../../shared/models/role.model";
 import { RoleRepository } from "../repositories/role.repository";
 

@@ -1,4 +1,4 @@
-import { ApiError } from "../../../middlewares/error.middleware";
+import { ApiError } from "../../../middlewares/errorHandler.middleware";
 import { UserData } from "../../../shared/models/user.model";
 import { hashValue, verifyHashedValue } from "../../../utils/hashing";
 import { UserRepository } from "../repositories/user.repository";

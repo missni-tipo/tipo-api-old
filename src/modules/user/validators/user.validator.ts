@@ -1,5 +1,5 @@
 import { body, param } from "express-validator";
-import { ApiError } from "../../../middlewares/error.middleware";
+import { ApiError } from "../../../middlewares/errorHandler.middleware";
 
 export class UserValidator {
     static getUser = [

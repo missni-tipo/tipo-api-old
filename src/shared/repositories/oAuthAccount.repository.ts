@@ -14,7 +14,7 @@ export class BaseOAuthAccountRepository extends BaseRepository<OAuthAccount> {
     }
 
     async findOAuthAccountById(id: string) {
-        return await this.findById(id);
+        return await this.findOne({ id });
     }
 
     async createOAuthAccount(data: OAuthAccountData) {

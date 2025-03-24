@@ -6,7 +6,7 @@ import {
 import { $Enums } from "@prisma/client";
 import { hashValue, verifyHashedValue } from "../../../utils/hashing";
 import { UserData } from "../../../shared/models/user.model";
-import { ApiError } from "../../../middlewares/error.middleware";
+import { ApiError } from "../../../middlewares/errorHandler.middleware";
 import jwt from "jsonwebtoken";
 import { config } from "../../../config/config";
 export class AuthService {
