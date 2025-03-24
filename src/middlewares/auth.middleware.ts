@@ -1,14 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { ApiError } from "./error.middleware";
+import { ApiError } from "./errorHandler.middleware";
+import { verifyJWTToken } from "../utils/token.util";
+import { AuthRequest, AuthUser } from "../shared/models/authRequest.model";
 import { config } from "../config/config";
-import { CustomRequest } from "../shared/models/customRequest.model";
 
-const authMiddleware = (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction
-) => {
+const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -16,20 +12,17 @@ const authMiddleware = (
         }
 
         const token = authHeader.split(" ")[1];
+        const decoded: AuthUser = verifyJWTToken(token, config.JWT_SECRET);
 
-        const decoded = jwt.verify(token, config.JWT_SECRET) as {
-            id: string;
-            role: string;
-        };
-
-        req.user = decoded;
+        (req as AuthRequest).auth = decoded;
 
         next();
     } catch (error) {
-        if (error instanceof jwt.JsonWebTokenError) {
-            throw new ApiError(403, "Forbidden: Invalid or expired token");
+        if (error instanceof Error) {
+            next(new ApiError(403, error.message));
+        } else {
+            next(new ApiError(403, "Unknown error occurred"));
         }
-        next(error);
     }
 };
 

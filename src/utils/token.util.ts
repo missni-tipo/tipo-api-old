@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { AuthUser } from "../shared/models/authRequest.model";
 
 export const generateVerifyCode = (length: number = 6): string => {
     const array = new Uint8Array(length);
@@ -15,5 +16,5 @@ export const generateJWTToken = (
 };
 
 export const verifyJWTToken = (token: string, secret: string) => {
-    return jwt.verify(token, secret);
+    return jwt.verify(token, secret) as AuthUser;
 };

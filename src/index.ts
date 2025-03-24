@@ -4,13 +4,12 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import moment from "moment-timezone";
 
 dotenv.config();
 
 import { config } from "./config/config";
 import router from "./routes/index.route";
-import { errorHandler } from "./middlewares/error.middleware";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 const app = express();
 
