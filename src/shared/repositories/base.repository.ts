@@ -3,59 +3,74 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class BaseRepository<T> {
-    protected model: any;
+    protected model: {
+        count: (args?: any) => Promise<number>;
+        findUnique: (args: any) => Promise<T | null>;
+        findMany: (args?: any) => Promise<T[]>;
+        findFirst: (args: any) => Promise<T | null>;
+        create: (args: any) => Promise<T>;
+        update: (args: any) => Promise<T>;
+        delete: (args: any) => Promise<T>;
+        deleteMany: (args: any) => Promise<{ count: number }>;
+    };
 
     constructor(model: any) {
         this.model = model;
     }
 
-    async findUnique(field: string, value: any): Promise<T | null> {
-        return this.model.findUnique({
-            where: { [field]: value },
-        });
+    async count(filters?: Partial<T>): Promise<number> {
+        return await this.model.count({ where: filters || {} });
     }
 
-    async findMany(params: Record<string, any> = {}): Promise<T[] | null> {
-        return this.model.findMany(params);
+    async findUnique(where: Partial<T>): Promise<T | null> {
+        return this.model.findUnique({ where });
+    }
+
+    async findMany(
+        params: Record<string, any> = {},
+        page: number = 1,
+        limit: number = 10
+    ): Promise<T[]> {
+        return this.model.findMany({
+            ...params,
+            skip: (page - 1) * limit,
+            take: limit,
+        });
     }
 
     async findOne(where: Partial<T>): Promise<T | null> {
         return this.model.findFirst({ where });
     }
 
-    async findByEmail(email: string): Promise<T | null> {
-        return this.model.findMany({ where: { email } });
-    }
-
-    async findById(id: string): Promise<T | null> {
-        return this.model.findUnique({ where: { id } });
-    }
-
-    async findAll(): Promise<T[]> {
-        return this.model.findMany();
-    }
-
     async create(data: Partial<T>): Promise<T> {
         return this.model.create({ data });
-    }
-
-    async updateById(id: string, data: Partial<T>): Promise<T> {
-        return this.model.update({ where: { id }, data });
     }
 
     async update(where: Partial<T>, data: Partial<T>): Promise<T> {
         return this.model.update({ where, data });
     }
 
-    async deleteById(id: string): Promise<T> {
-        return this.model.delete({ where: { id } });
+    async delete(where: Partial<T>): Promise<T> {
+        return this.model.delete({ where });
     }
 
-    async delete(where: Partial<T>): Promise<{ count: number }> {
-        return this.model.deleteMany({ where });
+    async exists(where: Partial<T>): Promise<boolean> {
+        return !!(await this.model.findFirst({ where }));
     }
 
-    async exists(field: string, value: any): Promise<boolean> {
-        return !!(await this.model.findFirst({ where: { [field]: value } }));
+    async runTransaction(
+        action: (
+            tx: Omit<
+                PrismaClient,
+                | "$connect"
+                | "$disconnect"
+                | "$on"
+                | "$transaction"
+                | "$use"
+                | "$extends"
+            >
+        ) => Promise<any>
+    ) {
+        return await prisma.$transaction(action);
     }
 }

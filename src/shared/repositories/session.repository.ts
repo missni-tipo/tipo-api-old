@@ -14,7 +14,7 @@ export class BaseSessionRepository extends BaseRepository<Session> {
     }
 
     async findSessionById(id: string) {
-        return await this.findById(id);
+        return await this.findOne({ id });
     }
 
     async createSession(data: SessionData) {

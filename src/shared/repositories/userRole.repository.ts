@@ -10,7 +10,7 @@ export class BaseUserRoleRepository extends BaseRepository<UserRole> {
     }
 
     async findUserRoleById(id: string) {
-        return await this.findById(id);
+        return await this.findOne({ id });
     }
 
     async findUserRoleByUserId(data: Partial<UserRoleData>) {

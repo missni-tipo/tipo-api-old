@@ -14,7 +14,7 @@ export class BaseRoleRepository extends BaseRepository<Role> {
     }
 
     async findRoleById(id: string) {
-        return await this.findById(id);
+        return await this.findOne({ id });
     }
 
     async findRoles(data: Partial<RoleData>) {
@@ -26,6 +26,6 @@ export class BaseRoleRepository extends BaseRepository<Role> {
     }
 
     async updateRole(id: string, data: Partial<RoleData>) {
-        return await this.updateById(id, data);
+        return await this.update({ id }, data);
     }
 }

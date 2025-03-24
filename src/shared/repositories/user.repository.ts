@@ -14,7 +14,7 @@ export class BaseUserRepository extends BaseRepository<User> {
     }
 
     async findUserById(id: string) {
-        return await this.findById(id);
+        return await this.findOne({ id });
     }
 
     async getUsers(
@@ -32,6 +32,6 @@ export class BaseUserRepository extends BaseRepository<User> {
     }
 
     async updateUser(id: string, data: Partial<UserData>) {
-        return await this.updateById(id, data);
+        return await this.update({ id }, data);
     }
 }

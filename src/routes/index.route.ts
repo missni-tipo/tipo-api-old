@@ -1,9 +1,10 @@
-import express from "express";
+import express, { Request } from "express";
 import authMiddleware from "../middlewares/auth.middleware";
-import { CustomRequest } from "../shared/models/customRequest.model";
+import { AuthRequest } from "../shared/models/authRequest.model";
 import authRoutes from "../modules/auth/routes/auth.route";
 import userRoutes from "../modules/user/routes/user.route";
 import roleRoutes from "../modules/user/routes/role.route";
+import tourRoutes from "../modules/tour/routes/tour.route";
 
 const router = express.Router();
 
@@ -19,11 +20,14 @@ router.use(`/users`, authMiddleware, userRoutes);
 
 router.use(`/roles`, authMiddleware, roleRoutes);
 
-router.get("/protected", authMiddleware, (req: CustomRequest, res) => {
+router.use(`/tours`, authMiddleware, tourRoutes);
+
+router.get("/protected", authMiddleware, (req, res) => {
+    const authReq = req as AuthRequest;
     res.status(200).json({
         status: true,
         message: "You have accessed a protected route!",
-        user: req.user,
+        user: authReq.auth,
     });
 });
 

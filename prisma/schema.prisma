@@ -127,8 +127,8 @@ model Tour {
   location     String
   latitude     Float?
   longitude    Float?
-  category     String   @default("hiburan")
-  status       ProcessStatus @default(APPROVED)
+  category     TourCategory   @default(ENTERTAINMENT)
+  status       Status @default(ACTIVE)
   rating       Float    @default(0.0)
   reviewCount  Int      @map("review_count")  @default(0)
   picture      String[]
@@ -455,4 +455,15 @@ enum ResetFrequency {
   MONTHLY
   YEARLY
   CUSTOM
+}
+
+enum TourCategory {
+  ENTERTAINMENT
+  CULINARY
+  EDUCATION
+  NATURE
+  CULTURE_HISTORY
+  RELIGI
+  ADVENTURE
+  HEALTH
 }
