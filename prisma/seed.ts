@@ -6,6 +6,7 @@ import {
     Status,
     TransactionType,
     TokenVerificationType,
+    TourCategory,
 } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -245,8 +246,8 @@ async function main() {
                 location: "Jakarta Utara",
                 latitude: -6.1185,
                 longitude: 106.9034,
-                category: "alam",
-                status: ProcessStatus.APPROVED,
+                category: TourCategory.ENTERTAINMENT,
+                status: Status.ACTIVE,
                 rating: 4.7,
                 reviewCount: 25,
                 picture: [
@@ -266,8 +267,8 @@ async function main() {
                 location: "Jakarta Utara",
                 latitude: -6.118,
                 longitude: 106.9,
-                category: "hiburan",
-                status: ProcessStatus.APPROVED,
+                category: TourCategory.ENTERTAINMENT,
+                status: Status.ACTIVE,
                 rating: 4.5,
                 reviewCount: 40,
                 picture: [
